@@ -1,4 +1,4 @@
-print("Welkom bij de tentakel!")
+print("Welkom bij de tentakel!!!!")
 
 # Importing libraries
 import serial
