@@ -1,0 +1,1 @@
+print("Welkom bij onze tentakel!")
