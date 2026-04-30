@@ -1,1 +1,2 @@
-print("Welkom bij onze tentakel!")
+print("Welkom bij de tentakel!")
+
