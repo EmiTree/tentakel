@@ -56,5 +56,6 @@ while True:
                 f"P: {p_value:.2f}, "
                 f"I: {i_value:.2f}, "
                 f"D: {d_value:.2f}"
+                f" (dt: {dt:.3f}s)"
             )
             last_print_time = now #updates the last_print_time to the current time after printing, so the next print will wait for the print_interval again
