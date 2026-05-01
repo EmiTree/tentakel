@@ -17,7 +17,7 @@ ser.write(b"Start\n")
 
 # Initial variables
 calibration_coefficient = 0 #changes the angle to match the real angle of the tentacle, is raw_angle + calibration_coefficient = angle
-pid = PIDController(kp=1.0, ki=1.0, kd=1.0, setpoint=0)
+pid = PIDController(kp=1.0, ki=0.01, kd=0.0, setpoint=0)
 run_time = 30 #how long the program should run, in seconds
 start_time = time.time()
 live_points = 300 #how many points are shown on the graph at the same time, more points can make the graph slower, but also smoother and more informative
@@ -25,7 +25,7 @@ live_points = 300 #how many points are shown on the graph at the same time, more
 # Time commands for PID
 previous_time = time.time() #used for PID calculation
 last_print_time = time.time() #used for terminal printing s
-print_interval = 0.1  # controls how often the terminal prints the data, in seconds (0.1 means 10 prints per second)
+print_interval = 0.01  # controls how often the terminal prints the data, in seconds (0.1 means 10 prints per second)
 
 #-------------- Start plotting code------------------
 #Storage for plotting
@@ -119,11 +119,8 @@ while time.time() - start_time < run_time:
             angle_line.set_data(time_data, angle_data) #updates graph
             pid_line.set_data(time_data, pid_data) #updates graph
 
-            x_min = max(0, plot_time - 30) 
-            x_max = max(30, plot_time) 
-
-            axs[0].set_xlim(x_min, x_max)
-            axs[1].set_xlim(x_min, x_max)
+            axs[0].set_xlim(0, run_time)
+            axs[1].set_xlim(0, run_time)
 
             #For extra smoothness
             fig.canvas.draw_idle()  #Redraw the figure when you get a chance.
@@ -148,3 +145,16 @@ while time.time() - start_time < run_time:
             last_print_time = now #updates the last_print_time to the current time after printing, so the next print will wait for the print_interval again
 
 
+print("Finished collecting data")
+
+angle_line.set_data(time_data, angle_data)
+pid_line.set_data(time_data, pid_data)
+
+axs[0].set_xlim(0, run_time)
+axs[1].set_xlim(0, run_time)
+
+fig.canvas.draw_idle()
+fig.canvas.flush_events()
+
+plt.ioff()
+plt.show()
