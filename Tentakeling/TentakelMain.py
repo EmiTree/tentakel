@@ -9,7 +9,7 @@ from pidcontrol  import PIDController
 
 
 # Setting up serial communication
-ser = serial.Serial('COM7', 115200, timeout=0.1)
+ser = serial.Serial('COM7', 115200, timeout=0.5)
 print("Starting up...")
 time.sleep(2)
 ser.write(b"Start\n")
