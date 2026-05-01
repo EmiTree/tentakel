@@ -5,7 +5,7 @@ import serial
 import time
 
 # Importing other files
-from pidcontrol import PIDController
+from Backlog_pidcontrol import PIDController
 
 # Setting up serial communication
 ser = serial.Serial('COM7', 115200, timeout=0.01) #(port, baudrate, timeout)
@@ -58,5 +58,3 @@ while True:
                 f"D: {d_value:.2f}"
             )
             last_print_time = now #updates the last_print_time to the current time after printing, so the next print will wait for the print_interval again
-
-

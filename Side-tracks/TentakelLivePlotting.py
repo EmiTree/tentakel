@@ -72,8 +72,11 @@ while True:
         dt = current_time - previous_time
         previous_time = current_time
 
-        pid_output = pid.update(setpoint=0, measured_value=angle, dt=dt)
-
+        pid_output, p_value, i_value, d_value = pid.update(
+            setpoint=0,
+            measured_value=angle,
+            dt=dt
+        )
         plot_time = current_time - start_time
 
         time_data.append(plot_time)
@@ -97,8 +100,14 @@ while True:
             last_plot_time = now
 
         if now - last_print_time >= print_interval:
-            print(f"Angle: {angle}, Raw: {raw_angle}, PID Output: {pid_output}")
-            last_print_time = now
+            print(
+                f"Raw_angle: {raw_angle}, "
+                f"Angle: {angle}, "
+                f"PID Output: {pid_output}, "
+                f"P: {p_value}, "
+                f"I: {i_value}, "
+                f"D: {d_value}"
+            )   
 
         # Converting PID output to motor output
         # [WIP]
