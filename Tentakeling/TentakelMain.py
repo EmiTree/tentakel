@@ -8,6 +8,7 @@ from collections import deque
 
 # Importing other files
 from pidcontrol import PIDController
+from MotorConversion import MotorConverter
 
 # Setting up serial communication
 ser = serial.Serial('COM7', 115200, timeout=0.01) #(port, baudrate, timeout)
@@ -17,8 +18,9 @@ ser.write(b"Start\n")
 
 # Initial variables
 calibration_coefficient = 0 #changes the angle to match the real angle of the tentacle, is raw_angle + calibration_coefficient = angle
-pid = PIDController(kp=1.0, ki=1, kd=0.1, setpoint=0)
-run_time = 30 #how long the program should run, in seconds
+pid = PIDController(kp=1.0, ki=0.1, kd=0.1, setpoint=0)
+motor_converter = MotorConverter(max_pid_output=300, max_pwm=100)
+run_time = 50 #how long the program should run, in seconds
 start_time = time.time()
 live_points = 300 #how many points are shown on the graph at the same time, more points can make the graph slower, but also smoother and more informative
 
@@ -36,6 +38,7 @@ pid_data = []
 p_data = []
 i_data = []
 d_data = []
+motor_output_data = []
 
 # Setting up live plot
 plt.ion()
@@ -94,7 +97,7 @@ while time.time() - start_time < run_time:
         dt = current_time - previous_time
         previous_time = current_time #updates the previous_time to the current time for the next loop
         
-        if dt < 0.01:
+        if dt < 0.005:
             dt = 0.01
         
         pid_output, p_value, i_value, d_value = pid.update(
@@ -102,6 +105,11 @@ while time.time() - start_time < run_time:
             measured_value=angle,
             dt=dt
         )
+        
+        # Convert PID output to motor commands
+        pwm_a, pwm_b, motor_output = motor_converter.convert(pid_output)
+        
+        
 
         #-------------Start plotting code in loop------------------
         #time for plotting, makes sure graph's starts at 0 seconds
@@ -116,11 +124,13 @@ while time.time() - start_time < run_time:
         p_data.append(p_value)
         i_data.append(i_value)
         d_data.append(d_value)
+        motor_output_data.append(motor_output)
         
         #Updating live graph without making program too slow, based on the plot_interval
         if now - last_plot_time >= plot_interval: #checks if enough time has passed since the last plot, based on the plot_interval
             angle_line.set_data(time_data, angle_data) #updates graph
             pid_line.set_data(time_data, pid_data) #updates graph
+            
 
             axs[0].set_xlim(0, run_time)
             axs[1].set_xlim(0, run_time)
@@ -138,14 +148,16 @@ while time.time() - start_time < run_time:
 
        #checks if enough time has passed since the last print, based on the print_interval
         print(
-            f"Raw_angle: {raw_angle:.2f}, "
+            #f"Raw_angle: {raw_angle:.2f}, "
             f"Angle: {angle:.2f}, "
             f"PID Output: {pid_output:.2f}, "
             f"P: {p_value:.2f}, "
             f"I: {i_value:.2f}, "
-            f"D: {d_value:.2f}"
-            f" (dt: {dt:.3f}s)"
-            f" (now - lastplottime: {now - last_plot_time:.3f}s)"
+            f"D: {d_value:.2f}, "
+            f"Motor Output: {motor_output:.2f}, "
+            f"PWM A: {pwm_a:.2f}, "
+            f"PWM B: {pwm_b:.2f}, "
+            f"dt: {dt:.3f}s"
         )
         last_print_time = now #updates the last_print_time to the current time after printing, so the next print will wait for the print_interval again
 
