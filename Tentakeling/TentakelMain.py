@@ -82,6 +82,7 @@ while time.time() - start_time < run_time:
 
     #failsafe if no data is received, skips the rest of the loop and starts a new one
     if not data:
+        plt.pause(0.001)
         continue
     
     #Data starts with "S:" when it's an angle reading, so we check for that
