@@ -19,16 +19,18 @@ ser.write(b"Start\n")
 calibration_coefficient = 0 #changes the angle to match the real angle of the tentacle, is raw_angle + calibration_coefficient = angle
 pid = PIDController(kp=1.0, ki=1.0, kd=1.0, setpoint=0)
 run_time = 30 #how long the program should run, in seconds
+start_time = time.time()
+live_points = 300 #how many points are shown on the graph at the same time, more points can make the graph slower, but also smoother and more informative
 
 # Time commands for PID
 previous_time = time.time() #used for PID calculation
 last_print_time = time.time() #used for terminal printing s
 print_interval = 0.1  # controls how often the terminal prints the data, in seconds (0.1 means 10 prints per second)
 
-
 #-------------- Start plotting code------------------
 #Storage for plotting
 time_data = []
+raw_angle_data = []
 angle_data = []
 pid_data = []
 p_data = []
@@ -100,6 +102,7 @@ while time.time() - start_time < run_time:
         #-------------Start plotting code in loop------------------
         #time for plotting, makes sure graph's starts at 0 seconds
         plot_time = current_time - start_time
+        now = time.time()
 
         #Adding data for plotting to storage
         time_data.append(plot_time)
@@ -112,8 +115,8 @@ while time.time() - start_time < run_time:
         
         #Updating live graph without making program too slow, based on the plot_interval
         if now - last_plot_time >= plot_interval: #checks if enough time has passed since the last plot, based on the plot_interval
-            angle_line.set_data(time_data[-live_points:], angle_data[-live_points:]) #updates graph
-            pid_line.set_data(time_data[-live_points:], pid_data[-live_points:]) #updates graph
+            angle_line.set_data(time_data, angle_data) #updates graph
+            pid_line.set_data(time_data, pid_data) #updates graph
 
             x_min = max(0, plot_time - 30) 
             x_max = max(30, plot_time) 
