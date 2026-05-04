@@ -5,7 +5,7 @@ serial_timeout = 0.01
 startup_delay = 2
 start_command = b"Start\n"
 
-# Initial variables kaas
+# Initial variables
 calibration_coefficient = 0
 kp = 1.0
 ki = 0.1
