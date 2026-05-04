@@ -128,7 +128,7 @@ while time.time() - start_time < run_time:
         motor_output_data.append(motor_output)
         pwm_a_data.append(pwm_a)
         pwm_b_data.append(pwm_b)
-        pwm_a_data.append(pwm_a)
+        
         
         #Updating live graph without making program too slow, based on the plot_interval
         if now - last_plot_time >= plot_interval: #checks if enough time has passed since the last plot, based on the plot_interval
@@ -175,8 +175,8 @@ axs[1].set_xlim(0, run_time)
 fig.canvas.draw_idle()
 fig.canvas.flush_events()
 
-plt.ioff()
-plt.show()
+fig.canvas.draw_idle()
+fig.canvas.flush_events()
 
 plt.ioff()
 
