@@ -7,7 +7,7 @@ This is code was used for testing and calibrating the wall
 import serial
 import time
 import keyboard
- 
+
 serial = serial.Serial(port='COM7', baudrate=115200, timeout=.01)
 print("Starting up...")
 time.sleep(2)
@@ -34,12 +34,9 @@ def use_keys():
    
 while True:
 
-
-    if mode == "manual":
-        use_keys()
-        STEPS = 50
-        MOVE_TIME = 1
-        line = "A"
-        serial.write(line.encode("ascii"))
- 
-        time.sleep(0.1)
+    line = "A:180"
+    serial.write(line.encode("ascii"))
+    time.sleep()
+    line = "A:0"
+    serial.write(line.encode("ascii"))
+    time.sleep(1)    
