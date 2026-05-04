@@ -1,43 +1,36 @@
-'''
-This is code was used for testing and calibrating the wall
-'''
- 
- 
- 
 import serial
 import time
 import keyboard
-
-serial = serial.Serial(port='COM7', baudrate=115200, timeout=.01)
+ 
+ser = serial.Serial(port='COM7', baudrate=115200, timeout=.01)
+ 
 print("Starting up...")
 time.sleep(2)
-serial.write(b"Start\n")
-
+ser.write(b"Start\n")
+ 
+servo_1_pos = 0
+servo_2_pos = 0
 
 def use_keys():
-    global mode
-    if keyboard.is_pressed('w'):
-        #array[0] = 180
-        for i in range(len(array)):
-            array[i] = 180
- 
-    if keyboard.is_pressed('s'):
-        #array[0] = 0
-        for i in range(len(array)):
-            array[i] = 0
- 
-    if keyboard.is_pressed('q'):
-        array[a] = 180
- 
-    if keyboard.is_pressed('a'):
-        array[a] = 0
+    global servo_1_pos, servo_2_pos
+
+    if keyboard.is_pressed("w"):
+        servo_1_pos = 180
+    if keyboard.is_pressed("s"):
+        servo_1_pos = 0
+    if keyboard.is_pressed("a"):
+        servo_2_pos = 180
+    if keyboard.is_pressed("d"):
+        servo_2_pos = 0
    
 while True:
-    print(serial.readline().decode("utf-8"))
-    
-    line = "A:180"
-    serial.write(line.encode("ascii"))
-    time.sleep()
-    line = "A:0"
-    serial.write(line.encode("ascii"))
-    time.sleep(1)    
+    use_keys()
+
+    #print(ser.readline().decode("utf-8"))
+    servo_1_command = f"A:{servo_1_pos}"
+    ser.write(servo_1_command.encode("utf-8"))
+
+    servo_2_command = f"B:{servo_2_pos}"
+    ser.write(servo_2_command.encode("utf-8"))
+    print(f"Sent commands: {servo_1_command}, {servo_2_command}")
+    time.sleep(.1)    
