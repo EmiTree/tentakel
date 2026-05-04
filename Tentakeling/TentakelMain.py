@@ -130,7 +130,7 @@ while time.time() - start_time < run_time:
         pwm_b_data.append(pwm_b)
         
         
-        #Updating live graph without making program too slow, based on the plot_interval
+        #aaaaUpdating live graph without making program too slow, based on the plot_interval
         if now - last_plot_time >= plot_interval: #checks if enough time has passed since the last plot, based on the plot_interval
             angle_line.set_data(time_data, angle_data) #updates graph
             pid_line.set_data(time_data, pid_data) #updates graph
