@@ -33,7 +33,8 @@ def use_keys():
         array[a] = 0
    
 while True:
-
+    print(serial.readline().decode("utf-8"))
+    
     line = "A:180"
     serial.write(line.encode("ascii"))
     time.sleep()
