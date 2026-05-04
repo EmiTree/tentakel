@@ -9,9 +9,10 @@ time.sleep(2)
 ser.write(b"Start\n")
  
 dc_motor_speed = 0
+dc_motor_speed_2 = 0
 
 def use_keys():
-    global dc_motor_speed
+    global dc_motor_speed, dc_motor_speed_2
 
     if keyboard.is_pressed("b"):
         dc_motor_speed = 0
@@ -25,12 +26,31 @@ def use_keys():
         dc_motor_speed -= 1
     if keyboard.is_pressed("-"):
         dc_motor_speed += 1
+        
+    if keyboard.is_pressed("q"):
+        dc_motor_speed_2= 0
+    if keyboard.is_pressed("a"):
+        dc_motor_speed_2 = 10
+    if keyboard.is_pressed("w"):
+        dc_motor_speed_2 = 50
+    if keyboard.is_pressed("s"):
+        dc_motor_speed_2 = 100
+    if keyboard.is_pressed("e"):
+        dc_motor_speed_2 -= 1
+    if keyboard.is_pressed("d"):
+        dc_motor_speed_2 += 1
+    
 while True:
     use_keys()
 
     #print(ser.readline().decode("utf-8"))
     dc_motor_command = f"D:{dc_motor_speed}\n"
     ser.write(dc_motor_command.encode("utf-8"))
-
-    print(f"Sent command: {dc_motor_command}")
+    
+    dc_motor_command = f"E:{dc_motor_speed_2}\n"
+    ser.write(dc_motor_command.encode("utf-8"))
+    
+    print(f"PWM1: {dc_motor_speed}, PWM2: {dc_motor_speed_2}")
+    
+    #print(f"Sent command: {dc_motor_command}")
     time.sleep(.1)   
