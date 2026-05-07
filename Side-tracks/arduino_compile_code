@@ -6,7 +6,7 @@ MPU6050 mpu;
 Servo Servo1;
 Servo Servo2;
  
- 
+
  
 int const INTERRUPT_PIN = 2;
  

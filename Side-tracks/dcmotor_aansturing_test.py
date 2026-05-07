@@ -14,6 +14,10 @@ motor_1_pwm_2 = 0
 motor_2_pwm_1 = 0
 motor_2_pwm_2 = 0
 
+def send_motor_commands(letter, pwm):
+    dc_motor_command = f"{letter}:{pwm}\n"
+    ser.write(dc_motor_command.encode("utf-8"))
+
 def use_keys():
     global motor_1_pwm_1, motor_1_pwm_2, motor_2_pwm_1, motor_2_pwm_2
 

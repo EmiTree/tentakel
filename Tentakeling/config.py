@@ -11,7 +11,7 @@ kp = 1.0
 ki = 0.1
 kd = 0.1
 setpoint = 0
-max_pid_output = 100
+max_pid_output = 50
 max_pwm = 100
 run_time = 20
 live_points = 300
@@ -32,7 +32,7 @@ pid_y_min = -100
 pid_y_max = 100
 
 motor_y_min = -100
-motor_y_max = 100
+motor_y_max = 100   
 
-pwm_y_min = 0
+pwm_y_min = 0       
 pwm_y_max = 100
