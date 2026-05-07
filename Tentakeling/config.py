@@ -7,11 +7,11 @@ start_command = b"Start\n"
 
 # Initial variables
 calibration_coefficient = 0
-kp = 1.0
+kp = 5
 ki = 0.01
-kd = 0.1
+kd = 0.5
 setpoint = 0
-max_pid_output = 50
+max_pid_output = 140
 max_pwm = 100
 run_time = 20
 live_points = 300
