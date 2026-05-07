@@ -43,6 +43,7 @@ motor_output_data = []
 pwm_a_data = []
 pwm_b_data = []
 
+
 # Setting up live plot
 plt.ion()
 
@@ -128,9 +129,9 @@ while time.time() - start_time < run_time:
         motor_output_data.append(motor_output)
         pwm_a_data.append(pwm_a)
         pwm_b_data.append(pwm_b)
-        
-        
-        #aaaaUpdating live graph without making program too slow, based on the plot_interval
+ 
+
+        #Updating live graph without making program too slow, based on the plot_interval
         if now - last_plot_time >= plot_interval: #checks if enough time has passed since the last plot, based on the plot_interval
             angle_line.set_data(time_data, angle_data) #updates graph
             pid_line.set_data(time_data, pid_data) #updates graph
@@ -146,6 +147,26 @@ while time.time() - start_time < run_time:
 
         #-------------End plotting code in loop------------------
 
+        #-------------Start motor actuation code------------------
+        
+            #conversion naar snelst bij 100 en stil bij 0:
+            #pwm_a_converted = 100 - pwm_a
+            #pwm_b_converted = 100 - pwm_b
+            
+            #dc_motor_command = f"D:{pwm_a}\n"
+            #ser.write(dc_motor_command.encode("utf-8"))
+            
+            #dc_motor_command = f"E:{0}\n"
+            #ser.write(dc_motor_command.encode("utf-8"))
+            
+            #dc_motor_command = f"F:{pwm_b}\n"
+            #ser.write(dc_motor_command.encode("utf-8"))
+            
+            #dc_motor_command = f"G:{0}\n"
+            #ser.write(dc_motor_command.encode("utf-8"))
+        #-------------end motor actuation code---------------------
+ 
+
         now = time.time()
 
        #checks if enough time has passed since the last print, based on the print_interval
@@ -157,8 +178,8 @@ while time.time() - start_time < run_time:
             f"I: {i_value:.2f}, "
             f"D: {d_value:.2f}, "
             f"Motor Output: {motor_output:.2f}, "
-            f"PWM A: {pwm_a:.2f}, "
-            f"PWM B: {pwm_b:.2f}, "
+            #f"PWM A converted: {pwm_a_converted:.2f}, "
+            #f"PWM B converted: {pwm_b_converted:.2f}, "
             f"dt: {dt:.3f}s"
         )
         last_print_time = now #updates the last_print_time to the current time after printing, so the next print will wait for the print_interval again

@@ -8,49 +8,91 @@ print("Starting up...")
 time.sleep(2)
 ser.write(b"Start\n")
  
-dc_motor_speed = 0
-dc_motor_speed_2 = 0
+motor_1_pwm_1 = 0
+motor_1_pwm_2 = 0
+
+motor_2_pwm_1 = 0
+motor_2_pwm_2 = 0
 
 def use_keys():
-    global dc_motor_speed, dc_motor_speed_2
+    global motor_1_pwm_1, motor_1_pwm_2, motor_2_pwm_1, motor_2_pwm_2
 
-    if keyboard.is_pressed("b"):
-        dc_motor_speed = 0
-    if keyboard.is_pressed("n"):
-        dc_motor_speed = 10
-    if keyboard.is_pressed("m"):
-        dc_motor_speed = 50
-    if keyboard.is_pressed(","):
-        dc_motor_speed = 100
-    if keyboard.is_pressed("+"):
-        dc_motor_speed -= 1
-    if keyboard.is_pressed("-"):
-        dc_motor_speed += 1
-        
+    if keyboard.is_pressed("1"):
+        motor_1_pwm_1 += 10
     if keyboard.is_pressed("q"):
-        dc_motor_speed_2= 0
+        motor_1_pwm_1 += 1
     if keyboard.is_pressed("a"):
-        dc_motor_speed_2 = 10
+        motor_1_pwm_1 -= 1
+    if keyboard.is_pressed("z"):
+        motor_1_pwm_1 -= 10
+    
+    if keyboard.is_pressed("2"):
+        motor_1_pwm_2 += 10
     if keyboard.is_pressed("w"):
-        dc_motor_speed_2 = 50
+        motor_1_pwm_2 += 1
     if keyboard.is_pressed("s"):
-        dc_motor_speed_2 = 100
+        motor_1_pwm_2 -= 1
+    if keyboard.is_pressed("x"):
+        motor_1_pwm_2 -= 10
+    
+    if keyboard.is_pressed("3"):
+        motor_2_pwm_1 += 10
     if keyboard.is_pressed("e"):
-        dc_motor_speed_2 -= 1
+        motor_2_pwm_1 += 1
     if keyboard.is_pressed("d"):
-        dc_motor_speed_2 += 1
+        motor_2_pwm_1 -= 1
+    if keyboard.is_pressed("c"):
+        motor_2_pwm_1 -= 10
+    
+    if keyboard.is_pressed("4"):
+        motor_2_pwm_2 += 10
+    if keyboard.is_pressed("r"):
+        motor_2_pwm_2 += 1
+    if keyboard.is_pressed("f"):
+        motor_2_pwm_2 -= 1
+    if keyboard.is_pressed("v"):
+        motor_2_pwm_2 -= 10
+
+    if keyboard.is_pressed("5"):
+        motor_2_pwm_1 += 10
+        motor_1_pwm_1 += 10
+    if keyboard.is_pressed("t"):
+        motor_2_pwm_1 += 1
+        motor_1_pwm_1 += 1
+    if keyboard.is_pressed("g"):
+        motor_2_pwm_1 -= 1
+        motor_1_pwm_1 -= 1
+    if keyboard.is_pressed("b"):
+        motor_2_pwm_1-= 10
+        motor_1_pwm_1 -= 10
+
+
+    if keyboard.is_pressed("0"):
+        motor_2_pwm_1 = motor_2_pwm_2 = motor_1_pwm_1 = motor_1_pwm_2 = 0
+
     
 while True:
     use_keys()
+    
+    #conversion naar snelst bij 100 en stil bij 0:
+    #motor_1_pwm_1 = 100 - motor_1_pwm_1
+    #motor_1_pwm_2 = 100 - motor_1_pwm_2
 
     #print(ser.readline().decode("utf-8"))
-    dc_motor_command = f"D:{dc_motor_speed}\n"
+    dc_motor_command = f"D:{motor_1_pwm_1}\n"
+    #dc_motor_command = f"D:{motor_1_pwm_1}\n E:{motor_1_pwm_2}\n F:{motor_2_pwm_1}\n G:{motor_2_pwm_2}\n"
     ser.write(dc_motor_command.encode("utf-8"))
     
-    dc_motor_command = f"E:{dc_motor_speed_2}\n"
+    dc_motor_command = f"E:{motor_1_pwm_2}\n"
     ser.write(dc_motor_command.encode("utf-8"))
     
-    print(f"PWM1: {dc_motor_speed}, PWM2: {dc_motor_speed_2}")
+    dc_motor_command = f"F:{motor_2_pwm_1}\n"
+    ser.write(dc_motor_command.encode("utf-8"))
+    
+    dc_motor_command = f"G:{motor_2_pwm_2}\n"
+    ser.write(dc_motor_command.encode("utf-8"))
+    
+    print(f"PWM1: {motor_1_pwm_1}, PWM2: {motor_1_pwm_2}, PWM3: {motor_2_pwm_1}, PWM4: {motor_2_pwm_2}")
     
     #print(f"Sent command: {dc_motor_command}")
     time.sleep(.1)   
