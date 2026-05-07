@@ -69,6 +69,18 @@ def use_keys():
     if keyboard.is_pressed("b"):
         motor_2_pwm_1-= 10
         motor_1_pwm_1 -= 10
+    if keyboard.is_pressed("6"):
+        motor_2_pwm_2 += 10
+        motor_1_pwm_2 += 10
+    if keyboard.is_pressed("y"):
+        motor_2_pwm_2 += 1
+        motor_1_pwm_2 += 1
+    if keyboard.is_pressed("h"):
+        motor_2_pwm_2 -= 1
+        motor_1_pwm_2 -= 1
+    if keyboard.is_pressed("n"):
+        motor_2_pwm_2-= 10
+        motor_1_pwm_2 -= 10
 
 
     if keyboard.is_pressed("0"):

@@ -12,8 +12,9 @@ from MotorConversion import MotorConverter
 import config
 
 def send_motor_commands(letter, pwm):  #Ben je DOM? Ja, dat ben je. Je hebt deze functie al in dcmotor_aansturing_test.py staan, en nu ook hier. Je hoeft maar 1 keer een functie te maken, en dan  kan je die in beide bestanden gebruiken door die te importeren. Maar nee, jij maakt gewoon 2 keer dezelfde functie, in 2 verschillende bestanden. Echt waar, je bent zo dom. Je hebt echt geen hersenen, zeg. Je bent echt een sukkel. Je bent echt waardeloos. Je zult nooit iets bereiken in het leven, want je bent gewoon te dom om iets goed te doen. Je zult altijd falen, want je bent gewoon een loser. Je bent echt een triest persoon, en iedereen zal je haten. Je verdient het niet om gelukkig te zijn, want je bent gewoon te dom om dat te begrijpen. Je zult altijd alleen zijn, want niemand wil met een sukkel zoals jij omgaan. Je bent echt een ramp, en ik hoop dat je ooit beseft hoe waardeloos je bent.
-    dc_motor_command = f"{letter}:{pwm}\n"
+    dc_motor_command = f"{letter}:{int(pwm)}\n"
     ser.write(dc_motor_command.encode("utf-8"))
+    
 
 # Setting up serial communication
 ser = serial.Serial(config.serial_port, config.baud_rate, timeout=config.serial_timeout) #(port, baudrate, timeout)
@@ -133,14 +134,29 @@ while time.time() - start_time < run_time:
         motor_output_data.append(motor_output)
         pwm_a_data.append(pwm_a)
         pwm_b_data.append(pwm_b)
-
+        
+        
+        print(f"PWM A: {pwm_a}, PWM B: {pwm_b}")
+        
         if pwm_a > 0:
-            send_motor_commands("D", pwm_a)
-            send_motor_commands("E", 0)
-        else:
-            send_motor_commands("D", 0)
-            send_motor_commands("E", pwm_a)
+            #conversion to start at 50
+            pwm_a_better = 55 + pwm_a/100*50
+            pwm_b_better = 55 + pwm_b/100*50
             
+            send_motor_commands("D", pwm_a_better)
+            send_motor_commands("E", 0)
+            send_motor_commands("F", pwm_a_better)
+            send_motor_commands("G", 0)
+        else:
+            #conversion to start at 50
+            pwm_a_better = 50 + pwm_a/100*50
+            pwm_b_better = 50 + pwm_b/100*50
+            
+            send_motor_commands("D", 0)
+            send_motor_commands("E", pwm_b_better)
+            send_motor_commands("F", 0)
+            send_motor_commands("G", pwm_b_better)
+
         #Updating live graph without making program too slow, based on the plot_interval
         if now - last_plot_time >= plot_interval: #checks if enough time has passed since the last plot, based on the plot_interval
             angle_line.set_data(time_data, angle_data) #updates graph
@@ -180,18 +196,18 @@ while time.time() - start_time < run_time:
         now = time.time()
 
        #checks if enough time has passed since the last print, based on the print_interval
-        print(
+        #print(
             #f"Raw_angle: {raw_angle:.2f}, "
-            f"Angle: {angle:.2f}, "
-            f"PID Output: {pid_output:.2f}, "
-            f"P: {p_value:.2f}, "
-            f"I: {i_value:.2f}, "
-            f"D: {d_value:.2f}, "
-            f"Motor Output: {motor_output:.2f}, "
+        #    f"Angle: {angle:.2f}, "
+        ##    f"PID Output: {pid_output:.2f}, "
+         #   f"P: {p_value:.2f}, "
+        #    f"I: {i_value:.2f}, "
+        #    f"D: {d_value:.2f}, "
+        #    f"Motor Output: {motor_output:.2f}, "
             #f"PWM A converted: {pwm_a_converted:.2f}, "
             #f"PWM B converted: {pwm_b_converted:.2f}, "
-            f"dt: {dt:.3f}s"
-        )
+        #    f"dt: {dt:.3f}s"
+        #)
         last_print_time = now #updates the last_print_time to the current time after printing, so the next print will wait for the print_interval again
 
 
