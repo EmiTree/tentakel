@@ -7,29 +7,29 @@ import time
 # Importing other files
 from pidcontrol import PIDController
 from MotorConversion import MotorConverter
-import config
+import BacklogTentakel.b_config as b_config
 
 # Setting up serial communication
-ser = serial.Serial(config.serial_port, config.baud_rate, timeout=config.serial_timeout) #(port, baudrate, timeout)
+ser = serial.Serial(b_config.serial_port, b_config.baud_rate, timeout=b_config.serial_timeout) #(port, baudrate, timeout)
 print("Starting up...")
-time.sleep(config.startup_delay)
-ser.write(config.start_command)
+time.sleep(b_config.startup_delay)
+ser.write(b_config.start_command)
 
 def send_motor_commands(letter, pwm):
     dc_motor_command = f"{letter}:{int(pwm)}\n"
     ser.write(dc_motor_command.encode("utf-8"))
 
 # Initial variables
-calibration_coefficient = config.calibration_coefficient #changes the angle to match the real angle of the tentacle, is raw_angle + calibration_coefficient = angle
-pid = PIDController(kp=config.kp, ki=config.ki, kd=config.kd, setpoint=config.setpoint)
-motor_converter = MotorConverter(max_pid_output=config.max_pid_output, max_pwm=config.max_pwm)
-run_time = config.run_time #how long the program should run, in seconds
+calibration_coefficient = b_config.calibration_coefficient #changes the angle to match the real angle of the tentacle, is raw_angle + calibration_coefficient = angle
+pid = PIDController(kp=b_config.kp, ki=b_config.ki, kd=b_config.kd, setpoint=b_config.setpoint)
+motor_converter = MotorConverter(max_pid_output=b_config.max_pid_output, max_pwm=b_config.max_pwm)
+run_time = b_config.run_time #how long the program should run, in seconds
 start_time = time.time()
 
 # Time commands for PID
 previous_time = time.time() #used for PID calculation
 last_print_time = time.time() #used for terminal printing s
-print_interval = config.print_interval  # controls how often the terminal prints the data, in seconds (0.1 means 10 prints per second)
+print_interval = b_config.print_interval  # controls how often the terminal prints the data, in seconds (0.1 means 10 prints per second)
 
 while time.time() - start_time < run_time:
     #reads bytes and turns bytes into text
@@ -48,11 +48,11 @@ while time.time() - start_time < run_time:
         dt = current_time - previous_time
         previous_time = current_time #updates the previous_time to the current time for the next loop
 
-        if dt < config.min_dt:
-            dt = config.min_dt
+        if dt < b_config.min_dt:
+            dt = b_config.min_dt
 
         pid_output, p_value, i_value, d_value = pid.update(
-            setpoint=config.setpoint,
+            setpoint=b_config.setpoint,
             measured_value=angle,
             dt=dt
         )

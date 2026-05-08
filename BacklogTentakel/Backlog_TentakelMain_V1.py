@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 from collections import deque
 
 # Importing other files
-from Backlog_pidcontrol import PIDController
-from Backlog_MotorConversion import MotorConverter
+from BacklogTentakel.b_pidcontrol import PIDController
+from BacklogTentakel.b_MotorConversion import MotorConverter
 
 # Setting up serial communication
 ser = serial.Serial('COM7', 115200, timeout=0.01) #(port, baudrate, timeout)

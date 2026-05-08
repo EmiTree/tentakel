@@ -1,5 +1,5 @@
 class MotorConverter:
-    def __init__(self, max_pid_output=10, max_pwm=100):
+    def __init__(self, max_pid_output=max_pid_output, max_pwm=100):
         self.max_pid_output = max_pid_output
         self.max_pwm = max_pwm
 
@@ -17,8 +17,6 @@ class MotorConverter:
         else:
             pwm_a = 0
             pwm_b = 0
-        
-        
         return pwm_a, pwm_b, motor_output
     
     

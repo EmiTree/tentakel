@@ -5,7 +5,7 @@ import serial
 import time
 
 # Importing other files
-from Backlog_pidcontrol import PIDController
+from BacklogTentakel.b_pidcontrol import PIDController
 
 # Setting up serial communication
 ser = serial.Serial('COM7', 115200, timeout=0.01) #(port, baudrate, timeout)
