@@ -13,7 +13,7 @@ kd = 0.5
 setpoint = 0
 max_pid_output = 140
 max_pwm = 100
-run_time = 20
+run_time = 30
 live_points = 300
 
 # Time commands for PID

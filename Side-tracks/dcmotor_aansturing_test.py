@@ -21,6 +21,7 @@ def send_motor_commands(letter, pwm):
 def use_keys():
     global motor_1_pwm_1, motor_1_pwm_2, motor_2_pwm_1, motor_2_pwm_2
 
+    #rechterwiel vooruit
     if keyboard.is_pressed("1"):
         motor_1_pwm_1 += 10
     if keyboard.is_pressed("q"):
@@ -30,6 +31,7 @@ def use_keys():
     if keyboard.is_pressed("z"):
         motor_1_pwm_1 -= 10
     
+    #rechterwiel achteruit
     if keyboard.is_pressed("2"):
         motor_1_pwm_2 += 10
     if keyboard.is_pressed("w"):
@@ -39,6 +41,7 @@ def use_keys():
     if keyboard.is_pressed("x"):
         motor_1_pwm_2 -= 10
     
+    #linkerwiel vooruit
     if keyboard.is_pressed("3"):
         motor_2_pwm_1 += 10
     if keyboard.is_pressed("e"):
@@ -48,6 +51,7 @@ def use_keys():
     if keyboard.is_pressed("c"):
         motor_2_pwm_1 -= 10
     
+    #linkerwiel achteruit
     if keyboard.is_pressed("4"):
         motor_2_pwm_2 += 10
     if keyboard.is_pressed("r"):
@@ -56,6 +60,9 @@ def use_keys():
         motor_2_pwm_2 -= 1
     if keyboard.is_pressed("v"):
         motor_2_pwm_2 -= 10
+
+
+
 
     if keyboard.is_pressed("5"):
         motor_2_pwm_1 += 10
@@ -95,16 +102,19 @@ while True:
     #motor_1_pwm_2 = 100 - motor_1_pwm_2
 
     #print(ser.readline().decode("utf-8"))
+    #rechterwiel vooruit
     dc_motor_command = f"D:{motor_1_pwm_1}\n"
-    #dc_motor_command = f"D:{motor_1_pwm_1}\n E:{motor_1_pwm_2}\n F:{motor_2_pwm_1}\n G:{motor_2_pwm_2}\n"
     ser.write(dc_motor_command.encode("utf-8"))
     
+    #rechterwiel achteruit
     dc_motor_command = f"E:{motor_1_pwm_2}\n"
     ser.write(dc_motor_command.encode("utf-8"))
     
+    #linkerwiel vooruit
     dc_motor_command = f"F:{motor_2_pwm_1}\n"
     ser.write(dc_motor_command.encode("utf-8"))
     
+    #linkerwiel achteruit
     dc_motor_command = f"G:{motor_2_pwm_2}\n"
     ser.write(dc_motor_command.encode("utf-8"))
     
