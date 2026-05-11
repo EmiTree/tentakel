@@ -9,15 +9,15 @@ class MotorConverter:
         motor_output = max(-self.max_pwm, min(motor_output, self.max_pwm))
 
         if motor_output > 0:
-            pwm_a = motor_output
-            pwm_b = 0
+            pwm_forwards = motor_output
+            pwm_backwards = 0
         elif motor_output < 0:
-            pwm_a = 0
-            pwm_b = abs(motor_output)
+            pwm_forwards = 0
+            pwm_backwards = abs(motor_output)
         else:
-            pwm_a = 0
-            pwm_b = 0
-        return pwm_a, pwm_b, motor_output
+            pwm_forwards = 0
+            pwm_backwards = 0
+        return pwm_forwards, pwm_backwards, motor_output
     
     
     

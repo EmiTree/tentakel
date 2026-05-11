@@ -6,9 +6,9 @@ import time
 import matplotlib.pyplot as plt
 
 # Importing other files
-from pidcontrol_with_D_filter import PIDController
-from MotorConversion import MotorConverter
-import config
+from b_pidcontrol import PIDController
+from b_MotorConversion import MotorConverter
+import config as config
 
 def send_motor_commands(letter, pwm):
     dc_motor_command = f"{letter}:{int(pwm)}\n"
@@ -22,13 +22,7 @@ ser.write(config.start_command)
 
 # Initial variables
 calibration_coefficient = config.calibration_coefficient #changes the angle to match the real angle of the tentacle, is raw_angle + calibration_coefficient = angle
-pid = PIDController(
-    kp=config.kp,
-    ki=config.ki,
-    kd=config.kd,
-    setpoint=config.setpoint,
-    derivative_alpha=config.derivative_alpha
-)
+pid = PIDController(kp=config.kp, ki=config.ki, kd=config.kd, setpoint=config.setpoint)
 motor_converter = MotorConverter(max_pid_output=config.max_pid_output, max_pwm=config.max_pwm)
 run_time = config.run_time #how long the program should run, in seconds
 start_time = time.time()
@@ -48,8 +42,8 @@ p_data = []
 i_data = []
 d_data = []
 motor_output_data = []
-pwm_forwards_data_with_add_on = []
-pwm_backwards_data_with_add_on = []
+pwm_a_data_with_add_on = []
+pwm_b_data_with_add_on = []
 #--------------End plotting code------------------continued in loop
 
 while time.time() - start_time < run_time:
@@ -79,11 +73,11 @@ while time.time() - start_time < run_time:
         )
 
         # Convert PID output to motor commands
-        pwm_forwards, pwm_backwards, motor_output = motor_converter.convert(pid_output)
+        pwm_a, pwm_b, motor_output = motor_converter.convert(pid_output)
         
          #-------------Start motor actuation code------------------
-        pwm_forwards_with_add_on = 0
-        pwm_backwards_with_add_on = 0
+        pwm_a_with_add_on = 0
+        pwm_b_with_add_on = 0
         
         #vocabulair
         #D: rechterwiel vooruit
@@ -91,23 +85,23 @@ while time.time() - start_time < run_time:
         #F: linkerwiel vooruit
         #G: linkerwiel achteruit
         
-        if pwm_forwards > 0:
+        if pwm_a > 0:
             #conversion to start at variable
-            pwm_forwards_with_add_on = config.add_on_pwm + pwm_forwards / 100 * (config.max_pwm - config.add_on_pwm)
+            pwm_a_with_add_on = config.add_on_pwm + pwm_a / 100 * 50
 
-            send_motor_commands("D", pwm_forwards_with_add_on)
+            send_motor_commands("D", pwm_a_with_add_on)
             send_motor_commands("E", 0)
-            send_motor_commands("F", pwm_forwards_with_add_on)
+            send_motor_commands("F", pwm_a_with_add_on)
             send_motor_commands("G", 0)
 
-        elif pwm_backwards > 0:
+        elif pwm_b > 0:
             #conversion to start at variable 
-            pwm_backwards_with_add_on = config.add_on_pwm + pwm_backwards / 100 * (config.max_pwm - config.add_on_pwm)
+            pwm_b_with_add_on = config.add_on_pwm + pwm_b / 100 * 50
 
             send_motor_commands("D", 0)
-            send_motor_commands("E", pwm_backwards_with_add_on)
+            send_motor_commands("E", pwm_b_with_add_on)
             send_motor_commands("F", 0)
-            send_motor_commands("G", pwm_backwards_with_add_on)
+            send_motor_commands("G", pwm_b_with_add_on)
 
         else:
             send_motor_commands("D", 0)
@@ -130,10 +124,11 @@ while time.time() - start_time < run_time:
         i_data.append(i_value)
         d_data.append(d_value)
         motor_output_data.append(motor_output)
-        pwm_forwards_data_with_add_on.append(pwm_forwards_with_add_on)
-        pwm_backwards_data_with_add_on.append(pwm_backwards_with_add_on)
+        pwm_a_data_with_add_on.append(pwm_a_with_add_on)
+        pwm_b_data_with_add_on.append(pwm_b_with_add_on)
         #-------------End plotting code in loop------------------
 
+    
 
         now = time.time()
 
@@ -147,8 +142,8 @@ while time.time() - start_time < run_time:
                 #f"I: {i_value:.2f}, "
                 #f"D: {d_value:.2f}, "
                 f"Motor Output: {motor_output:.2f}, "
-                f"PWM A: {pwm_forwards_data_with_add_on[-1]:.2f}, "
-                f"PWM B: {pwm_backwards_data_with_add_on[-1]:.2f}, "
+                f"PWM A: {pwm_a_data_with_add_on[-1]:.2f}, "
+                f"PWM B: {pwm_b_data_with_add_on[-1]:.2f}, "
                 f"dt: {dt:.3f}s, "
                 f"max_pid_output: {config.max_pid_output:.2f}, "
             )
@@ -205,18 +200,17 @@ axs_end[2, 1].set_title("Motor Output")
 axs_end[2, 1].set_ylabel("Motor Output")
 
 
-# PWM forwards with add on
-axs_end[3, 0].plot(time_data,pwm_forwards_data_with_add_on, color="cyan", label="PWM A")
-axs_end[3, 0].set_title("PWM Forwards_with_add_on")
-axs_end[3, 0].set_ylabel("PWM Forwards_with_add_on")
-axs_end[3, 0].set_ylim(config.pwm_y_min, config.pwm_y_max)
+# PWM A
+axs_end[3, 0].plot(time_data,pwm_a_data_with_add_on, color="cyan", label="PWM A")
+axs_end[3, 0].set_title("PWM A_with_add_on")
+axs_end[3, 0].set_ylabel("PWM A_with_add_on")
 
 
-# PWM backwards with add on
-axs_end[3, 1].plot(time_data, pwm_backwards_data_with_add_on  , color="magenta", label="PWM B")
-axs_end[3, 1].set_title("PWM Backwards_with_add_on ")
-axs_end[3, 1].set_ylabel("PWM Backwards_with_add_on")
-axs_end[3, 1].set_ylim(config.pwm_y_min, config.pwm_y_max)
+# PWM B
+axs_end[3, 1].plot(time_data, pwm_b_data_with_add_on  , color="magenta", label="PWM B")
+axs_end[3, 1].set_title("PWM B_with_add_on ")
+axs_end[3, 1].set_ylabel("PWM B_with_add_on")
+
 
 for ax in axs_end.flat:
     ax.set_xlabel("Time (s)")

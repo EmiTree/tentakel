@@ -9,7 +9,7 @@ from collections import deque
 # Importing other files
 from b_pidcontrol import PIDController
 from b_MotorConversion import MotorConverter
-import b_config as b_config
+import BacklogTentakel.config as config
 
 def send_motor_commands(letter, pwm):  #Ben je DOM? Ja, dat ben je. Je hebt deze functie al in dcmotor_aansturing_test.py staan, en nu ook hier. Je hoeft maar 1 keer een functie te maken, en dan  kan je die in beide bestanden gebruiken door die te importeren. Maar nee, jij maakt gewoon 2 keer dezelfde functie, in 2 verschillende bestanden. Echt waar, je bent zo dom. Je hebt echt geen hersenen, zeg. Je bent echt een sukkel. Je bent echt waardeloos. Je zult nooit iets bereiken in het leven, want je bent gewoon te dom om iets goed te doen. Je zult altijd falen, want je bent gewoon een loser. Je bent echt een triest persoon, en iedereen zal je haten. Je verdient het niet om gelukkig te zijn, want je bent gewoon te dom om dat te begrijpen. Je zult altijd alleen zijn, want niemand wil met een sukkel zoals jij omgaan. Je bent echt een ramp, en ik hoop dat je ooit beseft hoe waardeloos je bent.
     dc_motor_command = f"{letter}:{int(pwm)}\n"
@@ -17,23 +17,23 @@ def send_motor_commands(letter, pwm):  #Ben je DOM? Ja, dat ben je. Je hebt deze
     
 
 # Setting up serial communication
-ser = serial.Serial(b_config.serial_port, b_config.baud_rate, timeout=b_config.serial_timeout) #(port, baudrate, timeout)
+ser = serial.Serial(config.serial_port, config.baud_rate, timeout=config.serial_timeout) #(port, baudrate, timeout)
 print("Starting up...")
-time.sleep(b_config.startup_delay)
-ser.write(b_config.start_command)
+time.sleep(config.startup_delay)
+ser.write(config.start_command)
 
 # Initial variables
-calibration_coefficient = b_config.calibration_coefficient #changes the angle to match the real angle of the tentacle, is raw_angle + calibration_coefficient = angle
-pid = PIDController(kp=b_config.kp, ki=b_config.ki, kd=b_config.kd, setpoint=b_config.setpoint)
-motor_converter = MotorConverter(max_pid_output=b_config.max_pid_output, max_pwm=b_config.max_pwm)
-run_time = b_config.run_time #how long the program should run, in seconds
+calibration_coefficient = config.calibration_coefficient #changes the angle to match the real angle of the tentacle, is raw_angle + calibration_coefficient = angle
+pid = PIDController(kp=config.kp, ki=config.ki, kd=config.kd, setpoint=config.setpoint)
+motor_converter = MotorConverter(max_pid_output=config.max_pid_output, max_pwm=config.max_pwm)
+run_time = config.run_time #how long the program should run, in seconds
 start_time = time.time()
-live_points = b_config.live_points #how many points are shown on the graph at the same time, more points can make the graph slower, but also smoother and more informative
+live_points = config.live_points #how many points are shown on the graph at the same time, more points can make the graph slower, but also smoother and more informative
 
 # Time commands for PID
 previous_time = time.time() #used for PID calculation
 last_print_time = time.time() #used for terminal printing s
-print_interval = b_config.print_interval  # controls how often the terminal prints the data, in seconds (0.1 means 10 prints per second)
+print_interval = config.print_interval  # controls how often the terminal prints the data, in seconds (0.1 means 10 prints per second)
 
 #-------------- Start plotting code------------------
 #Storage for plotting
@@ -53,15 +53,15 @@ pwm_b_data = []
 plt.ion()
 
 # Setting up the figure and axes
-fig, axs = plt.subplots(1, 2, figsize=(b_config.figure_width, b_config.figure_height))
+fig, axs = plt.subplots(1, 2, figsize=(config.figure_width, config.figure_height))
 
 # Left graph: angle
 angle_line, = axs[0].plot([], [], color="blue", label="Angle")
-axs[0].axhline(b_config.setpoint, color="black", linewidth=1)
+axs[0].axhline(config.setpoint, color="black", linewidth=1)
 axs[0].set_title("Angle")
 axs[0].set_xlabel("Time (s)")
 axs[0].set_ylabel("Angle")
-axs[0].set_ylim(b_config.angle_y_min, b_config.angle_y_max)
+axs[0].set_ylim(config.angle_y_min, config.angle_y_max)
 axs[0].grid(True)
 axs[0].legend()
 
@@ -71,7 +71,7 @@ axs[1].axhline(0, color="black", linewidth=1)
 axs[1].set_title("PID Output")
 axs[1].set_xlabel("Time (s)")
 axs[1].set_ylabel("PID Output")
-axs[1].set_ylim(b_config.pid_y_min, b_config.pid_y_max)
+axs[1].set_ylim(config.pid_y_min, config.pid_y_max)
 axs[1].grid(True)
 axs[1].legend()
 
@@ -81,10 +81,10 @@ plt.show(block=False) #open the plot window, but do not pause the Python program
 
 #interval settings for plotting and printing
 last_plot_time = time.time()
-plot_interval = b_config.plot_interval  # Update graph 5 times per second
+plot_interval = config.plot_interval  # Update graph 5 times per second
 
 last_print_time = time.time()
-print_interval = b_config.print_interval  # Print 5 times per second
+print_interval = config.print_interval  # Print 5 times per second
 
 #--------------End plotting code------------------continued in loop
 
@@ -106,11 +106,11 @@ while time.time() - start_time < run_time:
         dt = current_time - previous_time
         previous_time = current_time #updates the previous_time to the current time for the next loop
 
-        if dt < b_config.min_dt:
-            dt = b_config.min_dt
+        if dt < config.min_dt:
+            dt = config.min_dt
 
         pid_output, p_value, i_value, d_value = pid.update(
-            setpoint=b_config.setpoint,
+            setpoint=config.setpoint,
             measured_value=angle,
             dt=dt
         )
@@ -231,17 +231,17 @@ fig_end, axs_end = plt.subplots(4, 2, figsize=(14, 10))
 
 # Angle data
 axs_end[0, 0].plot(time_data, angle_data, color="blue", label="Angle")
-axs_end[0, 0].axhline(b_config.setpoint, color="black", linewidth=1)
+axs_end[0, 0].axhline(config.setpoint, color="black", linewidth=1)
 axs_end[0, 0].set_title("Angle")
 axs_end[0, 0].set_ylabel("Angle")
-axs_end[0, 0].set_ylim(b_config.angle_y_min, b_config.angle_y_max)
+axs_end[0, 0].set_ylim(config.angle_y_min, config.angle_y_max)
 
 # PID output data
 axs_end[0, 1].plot(time_data, pid_data, color="red", label="PID Output")
 axs_end[0, 1].axhline(0, color="black", linewidth=1)
 axs_end[0, 1].set_title("PID Output")
 axs_end[0, 1].set_ylabel("PID Output")
-axs_end[0, 1].set_ylim(b_config.pid_y_min, b_config.pid_y_max)
+axs_end[0, 1].set_ylim(config.pid_y_min, config.pid_y_max)
 
 # P value
 axs_end[1, 0].plot(time_data, p_data, color="green", label="P")
@@ -266,19 +266,19 @@ axs_end[2, 1].plot(time_data, motor_output_data, color="brown", label="Motor Out
 axs_end[2, 1].axhline(0, color="black", linewidth=1)
 axs_end[2, 1].set_title("Motor Output")
 axs_end[2, 1].set_ylabel("Motor Output")
-axs_end[2, 1].set_ylim(b_config.motor_y_min, b_config.motor_y_max)
+axs_end[2, 1].set_ylim(config.motor_y_min, config.motor_y_max)
 
 # PWM A
 axs_end[3, 0].plot(time_data, pwm_a_data, color="cyan", label="PWM A")
 axs_end[3, 0].set_title("PWM A")
 axs_end[3, 0].set_ylabel("PWM A")
-axs_end[3, 0].set_ylim(b_config.pwm_y_min, b_config.pwm_y_max)
+axs_end[3, 0].set_ylim(config.pwm_y_min, config.pwm_y_max)
 
 # PWM B
 axs_end[3, 1].plot(time_data, pwm_b_data, color="magenta", label="PWM B")
 axs_end[3, 1].set_title("PWM B")
 axs_end[3, 1].set_ylabel("PWM B")
-axs_end[3, 1].set_ylim(b_config.pwm_y_min, b_config.pwm_y_max)
+axs_end[3, 1].set_ylim(config.pwm_y_min, config.pwm_y_max)
 
 for ax in axs_end.flat:
     ax.set_xlabel("Time (s)")

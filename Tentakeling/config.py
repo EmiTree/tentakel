@@ -13,14 +13,18 @@ kd = 0.5
 setpoint = 0
 max_pid_output = 140
 max_pwm = 100
-run_time = 30
+run_time = 10
+add_on_pwm = 70
 live_points = 300
+
+# Derivative filter settings
+derivative_alpha = 0.5  # Adjust this value to change the filter strength, the higher the more the new derivative is taken with
 
 # Time commands for PID
 min_dt = 0.01
 print_interval = 0.1
 
-# Plot settings
+# Plot settings (not needed anymore)
 plot_interval = 0.1
 figure_width = 12
 figure_height = 5
