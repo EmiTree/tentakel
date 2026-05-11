@@ -7,18 +7,20 @@ start_command = b"Start\n"
 
 # Initial variables
 calibration_coefficient = 0
-kp = 5
+kp = 2
 ki = 0.01
 kd = 0.5
 setpoint = 0
-max_pid_output = 140
+max_pid_output = 40
 max_pwm = 100
-run_time = 10
-add_on_pwm = 70
+run_time = 15
+add_on_pwm = 25
 live_points = 300
+pid_deadband = 0
+
 
 # Derivative filter settings
-derivative_alpha = 0.5  # Adjust this value to change the filter strength, the higher the more the new derivative is taken with
+derivative_alpha = 1  # Adjust this value to change the filter strength, the higher the more the new derivative is taken with
 
 # Time commands for PID
 min_dt = 0.01

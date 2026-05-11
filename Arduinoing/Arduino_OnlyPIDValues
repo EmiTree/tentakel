@@ -1,0 +1,178 @@
+//libraries 
+#include "I2Cdev.h" 
+#include "MPU6050_6Axis_MotionApps20.h"
+
+#if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
+  #include "Wire.h"
+#endif
+
+//creating MPU object, called 'mpu'
+MPU6050 mpu;
+
+// Interrupt pin for MPU6050 DMP
+const int INTERRUPT_PIN = 2;
+
+// PID values 
+const float KP = 5.0;
+const float KI = 0.01;
+const float KD = 0.5;
+const float SETPOINT = 0.0;
+
+// Optional angle offset, same idea as calibration_coefficient in Python
+const float CALIBRATION_COEFFICIENT = 0.0;
+
+//ben je dom, 
+bool dmpReady = false; //MPU not ready yet
+uint8_t devStatus; //unsigned 8-bit number 0-255
+uint16_t packetSize; //unsiged 16-bit number 0-65535
+uint8_t fifoBuffer[64]; //??
+
+//wiskunde die ik (nog?) niet snap, ben je dom
+Quaternion q; //orientatie in quaternion vorm
+VectorFloat gravity; //gravity vector
+float ypr[3]; //storage for yaw, pitch, roll values
+
+//ben je dom
+volatile bool mpuInterrupt = false;
+
+
+float previousError = 0.0; //stores previous error for derivative calculation
+float integral = 0.0; //stores integral of error for integral calculation
+unsigned long previousPidMicros = 0; //stores last time PID was calculated, used to calculate dt
+
+bool blinkState = false; //used to blink the built-in LED to indicate when a new DMP packet is processed
+
+void dmpDataReady() {
+  mpuInterrupt = true;
+}
+
+float updatePid(float setpoint, float measuredValue, float dt, float &pValue, float &iValue, float &dValue) {
+  float error = setpoint - measuredValue;
+
+  integral += error * dt;
+
+  float derivative = 0.0;
+  if (dt > 0.0) {
+    derivative = (error - previousError) / dt;
+  }
+
+  pValue = KP * error;
+  iValue = KI * integral;
+  dValue = KD * derivative;
+
+  previousError = error;
+
+  return pValue + iValue + dValue;
+}
+
+void setup() {
+  #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
+    Wire.begin();
+    Wire.setClock(400000);
+  #endif
+
+  Serial.begin(115200);
+  while (!Serial) {
+    // Arduino Nano usually continues immediately.
+  }
+
+  pinMode(INTERRUPT_PIN, INPUT); // MPU6050 interrupt pin is input
+  pinMode(LED_BUILTIN, OUTPUT); 
+
+  Serial.println("Initializing MPU6050...");
+  mpu.initialize();
+
+  // Check connection
+  if (!mpu.testConnection()) {
+    Serial.println("MPU6050 connection failed.");
+    while (true) {
+      blinkState = !blinkState;
+      digitalWrite(LED_BUILTIN, blinkState);
+      delay(200);
+    }
+  }
+
+  Serial.println("MPU6050 connected.");
+  Serial.println("Initializing DMP...");
+
+  devStatus = mpu.dmpInitialize();
+
+  // Offset placeholders. Replace with calibrated values later if needed.
+  mpu.setXGyroOffset(0);
+  mpu.setYGyroOffset(0);
+  mpu.setZGyroOffset(0);
+  mpu.setXAccelOffset(0);
+  mpu.setYAccelOffset(0);
+  mpu.setZAccelOffset(0);
+
+  if (devStatus == 0) {
+    Serial.println("Calibrating sensors. Keep the IMU still...");
+    mpu.CalibrateAccel(6);
+    mpu.CalibrateGyro(6);
+
+    mpu.setDMPEnabled(true);
+    //connects the interrupt pin to the dmpDataReady function, which sets mpuInterrupt to true when a new DMP packet is ready
+    attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), dmpDataReady, RISING);
+
+    packetSize = mpu.dmpGetFIFOPacketSize();
+    
+    dmpReady = true;
+    previousPidMicros = micros();
+
+    Serial.println("DMP ready.");
+    Serial.println("yaw, angle, pid, p, i, d, dt");
+  } else {
+    Serial.print("DMP initialization failed, code: ");
+    Serial.println(devStatus);
+    while (true);
+  }
+}
+
+void loop() {
+  if (!dmpReady) return; //if DMP no work, leave loop
+
+  if (mpu.dmpGetCurrentFIFOPacket(fifoBuffer)) {
+    mpu.dmpGetQuaternion(&q, fifoBuffer);
+    mpu.dmpGetGravity(&gravity, &q);
+    mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
+
+    float yaw = ypr[0] * 180.0 / M_PI;
+    float angle = yaw + CALIBRATION_COEFFICIENT;
+
+    unsigned long currentMicros = micros();
+    float dt = (currentMicros - previousPidMicros) / 1000000.0; //converting to microseconds
+    previousPidMicros = currentMicros;
+
+   
+
+    float pValue;
+    float iValue;
+    float dValue;
+
+    float pidOutput = updatePid(
+      SETPOINT,
+      angle,
+      dt,
+      pValue,
+      iValue,
+      dValue
+    );
+    //Serial.print("angle: ");
+    //Serial.print(yaw, 2);
+    Serial.print("angle: ");
+    Serial.print(angle, 2);
+    Serial.print(" PID-output: ");
+    Serial.print(pidOutput, 2);
+    Serial.print(" P: ");
+    Serial.print(pValue, 2);
+    Serial.print(" I:");
+    Serial.print(iValue, 2);
+    Serial.print(" D:");
+    Serial.print(dValue, 2);
+    Serial.print(" dt: ");
+    Serial.println(dt, 3);
+
+    blinkState = !blinkState;
+    digitalWrite(LED_BUILTIN, blinkState);
+  }
+}

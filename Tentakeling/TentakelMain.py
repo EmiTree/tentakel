@@ -1,3 +1,4 @@
+
 print("Welkom bij de tentakel!")
 
 # Importing libraries
@@ -77,6 +78,11 @@ while time.time() - start_time < run_time:
             measured_value=angle,
             dt=dt
         )
+        
+        if abs(pid_output) < config.pid_deadband:
+            pid_output_for_motor = 0
+        else:
+            pid_output_for_motor = pid_output
 
         # Convert PID output to motor commands
         pwm_forwards, pwm_backwards, motor_output = motor_converter.convert(pid_output)

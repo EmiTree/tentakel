@@ -1,0 +1,292 @@
+#include "I2Cdev.h"
+#include "MPU6050_6Axis_MotionApps20.h"
+
+#if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
+  #include "Wire.h"
+#endif
+
+MPU6050 mpu;
+
+// IMU interrupt pin
+const int INTERRUPT_PIN = 2;
+
+// Motor pins from your original Arduino code
+const int MOTOR_PIN_P_1 = 11;
+const int MOTOR_PIN_P_2 = 6;
+const int MOTOR_PIN_Q_1 = 5;
+const int MOTOR_PIN_Q_2 = 3;
+
+// PID values from your Python config.py
+const float KP = 5.0;
+const float KI = 0.01;
+const float KD = 0.5;
+const float SETPOINT = 0.0;
+
+// Same idea as your Python calibration_coefficient
+const float CALIBRATION_COEFFICIENT = 0.0;
+
+// Motor conversion values from your Python config.py
+const float MAX_PID_OUTPUT = 140.0;
+const float MAX_PWM = 100.0;
+
+// Motor dead-zone compensation
+// The motor starts moving at about 70%, so any non-zero motor command
+// gets mapped into the range 70-100%.
+const float MOTOR_START_PWM = 50.0;
+
+bool dmpReady = false;
+uint8_t devStatus;
+uint16_t packetSize;
+uint8_t fifoBuffer[64];
+
+Quaternion q;
+VectorFloat gravity;
+float ypr[3];
+
+volatile bool mpuInterrupt = false;
+
+float previousError = 0.0;
+float integral = 0.0;
+unsigned long previousPidMicros = 0;
+
+bool blinkState = false;
+
+void dmpDataReady() {
+  mpuInterrupt = true;
+}
+
+float updatePid(float setpoint, float measuredValue, float dt, float &pValue, float &iValue, float &dValue) {
+  float error = setpoint - measuredValue;
+
+  integral += error * dt;
+
+  float derivative = 0.0;
+  if (dt > 0.0) {
+    derivative = (error - previousError) / dt;
+  }
+
+  pValue = KP * error;
+  iValue = KI * integral;
+  dValue = KD * derivative;
+
+  previousError = error;
+
+  return pValue + iValue + dValue;
+}
+
+void convertPidToMotor(float pidOutput, float &pwmA, float &pwmB, float &motorOutput) {
+  motorOutput = pidOutput / MAX_PID_OUTPUT * MAX_PWM;
+
+  motorOutput = constrain(motorOutput, -MAX_PWM, MAX_PWM);
+
+  if (motorOutput > 0.0) {
+    pwmA = motorOutput;
+    pwmB = 0.0;
+  } else if (motorOutput < 0.0) {
+    pwmA = 0.0;
+    pwmB = abs(motorOutput);
+  } else {
+    pwmA = 0.0;
+    pwmB = 0.0;
+  }
+}
+
+float addMotorStartPower(float pwm) {
+  if (pwm <= 0.0) {
+    return 0.0;
+  }
+
+  float adjustedPwm = MOTOR_START_PWM + (pwm / 100.0) * (MAX_PWM - MOTOR_START_PWM);
+
+  return constrain(adjustedPwm, 0.0, MAX_PWM);
+}
+
+void driveMotors(float pwmA, float pwmB) {
+  float adjustedPwmA = addMotorStartPower(pwmA);
+  float adjustedPwmB = addMotorStartPower(pwmB);
+
+  int pwmAValue = (int)(adjustedPwmA / 100.0 * 255.0);
+  int pwmBValue = (int)(adjustedPwmB / 100.0 * 255.0);
+
+  pwmAValue = constrain(pwmAValue, 0, 255);
+  pwmBValue = constrain(pwmBValue, 0, 255);
+
+  if (adjustedPwmA > 0.0) {
+    analogWrite(MOTOR_PIN_P_1, pwmAValue);
+    analogWrite(MOTOR_PIN_Q_1, pwmAValue);
+
+    analogWrite(MOTOR_PIN_P_2, 0);
+    analogWrite(MOTOR_PIN_Q_2, 0);
+  } else if (adjustedPwmB > 0.0) {
+    analogWrite(MOTOR_PIN_P_1, 0);
+    analogWrite(MOTOR_PIN_Q_1, 0);
+
+    analogWrite(MOTOR_PIN_P_2, pwmBValue);
+    analogWrite(MOTOR_PIN_Q_2, pwmBValue);
+  } else {
+    analogWrite(MOTOR_PIN_P_1, 0);
+    analogWrite(MOTOR_PIN_Q_1, 0);
+    analogWrite(MOTOR_PIN_P_2, 0);
+    analogWrite(MOTOR_PIN_Q_2, 0);
+  }
+}
+
+void setup() {
+  #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
+    Wire.begin();
+    Wire.setClock(400000);
+  #endif
+
+  Serial.begin(115200);
+  while (!Serial) {
+    // Arduino Nano usually continues immediately.
+  }
+
+  pinMode(INTERRUPT_PIN, INPUT);
+  pinMode(LED_BUILTIN, OUTPUT);
+
+  pinMode(MOTOR_PIN_P_1, OUTPUT);
+  pinMode(MOTOR_PIN_P_2, OUTPUT);
+  pinMode(MOTOR_PIN_Q_1, OUTPUT);
+  pinMode(MOTOR_PIN_Q_2, OUTPUT);
+
+  driveMotors(0, 0);
+
+  Serial.println("Initializing MPU6050...");
+  mpu.initialize();
+
+  if (!mpu.testConnection()) {
+    Serial.println("MPU6050 connection failed.");
+
+    driveMotors(0, 0);
+
+    while (true) {
+      blinkState = !blinkState;
+      digitalWrite(LED_BUILTIN, blinkState);
+      delay(200);
+    }
+  }
+
+  Serial.println("MPU6050 connected.");
+  Serial.println("Initializing DMP...");
+
+  devStatus = mpu.dmpInitialize();
+
+  mpu.setXGyroOffset(0);
+  mpu.setYGyroOffset(0);
+  mpu.setZGyroOffset(0);
+  mpu.setXAccelOffset(0);
+  mpu.setYAccelOffset(0);
+  mpu.setZAccelOffset(0);
+
+  if (devStatus == 0) {
+    Serial.println("Calibrating sensors. Keep the IMU still...");
+
+    driveMotors(0, 0);
+
+    mpu.CalibrateAccel(6);
+    mpu.CalibrateGyro(6);
+
+    mpu.setDMPEnabled(true);
+    attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), dmpDataReady, RISING);
+
+    packetSize = mpu.dmpGetFIFOPacketSize();
+    dmpReady = true;
+    previousPidMicros = micros();
+
+    Serial.println("DMP ready.");
+    Serial.println("yaw, angle, pid, motor_output, pwm_a, pwm_b, adjusted_pwm_a, adjusted_pwm_b, p, i, d, dt");
+  } else {
+    Serial.print("DMP initialization failed, code: ");
+    Serial.println(devStatus);
+
+    driveMotors(0, 0);
+
+    while (true);
+  }
+}
+
+void loop() {
+  if (!dmpReady) return;
+
+  if (mpu.dmpGetCurrentFIFOPacket(fifoBuffer)) {
+    mpu.dmpGetQuaternion(&q, fifoBuffer);
+    mpu.dmpGetGravity(&gravity, &q);
+    mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
+
+    float yaw = ypr[0] * 180.0 / M_PI;
+    float angle = yaw + CALIBRATION_COEFFICIENT;
+
+    unsigned long currentMicros = micros();
+    float dt = (currentMicros - previousPidMicros) / 1000000.0;
+    previousPidMicros = currentMicros;
+
+    float pValue;
+    float iValue;
+    float dValue;
+
+    float pidOutput = updatePid(
+      SETPOINT,
+      angle,
+      dt,
+      pValue,
+      iValue,
+      dValue
+    );
+
+    float pwmA;
+    float pwmB;
+    float motorOutput;
+
+    convertPidToMotor(
+      pidOutput,
+      pwmA,
+      pwmB,
+      motorOutput
+    );
+
+    float adjustedPwmA = addMotorStartPower(pwmA);
+    float adjustedPwmB = addMotorStartPower(pwmB);
+
+    driveMotors(pwmA, pwmB);
+
+    // Serial.print(" yaw: ");
+    // Serial.print(yaw, 2);
+
+    Serial.print(" angle: ");
+    Serial.print(angle, 2);
+
+    Serial.print(" pidOutput: ");
+    Serial.print(pidOutput, 2);
+
+    Serial.print(" motorOutput: ");
+    Serial.print(motorOutput, 2);
+
+    //Serial.print(" pwmA: ");
+    //Serial.print(pwmA, 2);
+
+    //Serial.print(" pwmB: ");
+    //Serial.print(pwmB, 2);
+
+    Serial.print(" adjustedPwmA: ");
+    Serial.print(adjustedPwmA, 2);
+
+    Serial.print(" adjustedPwmB: ");
+    Serial.print(adjustedPwmB, 2);
+
+    // Serial.print(" p: ");
+    // Serial.print(pValue, 2);
+
+    // Serial.print(" i: ");
+    // Serial.print(iValue, 2);
+
+    // Serial.print(" d: ");
+    // Serial.print(dValue, 2);
+
+    Serial.print(" dt: ");
+    Serial.println(dt, 3);
+
+    blinkState = !blinkState;
+    digitalWrite(LED_BUILTIN, blinkState);
+  }
+}
